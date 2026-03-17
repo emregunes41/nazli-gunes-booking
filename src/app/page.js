@@ -7,6 +7,8 @@ import BookingCalendar from "@/components/BookingCalendar";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
+const IS_TEST_MODE = true; // Set to false for real payments
+
 export default function Home() {
   const [step, setStep] = useState(1); // 1 = Hero, 2 = Calendar, 3 = Form, 4 = Payment Iframe
   const [bookingData, setBookingData] = useState({ date: null, time: null });
@@ -61,8 +63,19 @@ export default function Home() {
             createdAt: serverTimestamp(),
             amount
           };
+
+          if (IS_TEST_MODE) {
+            newBooking.status = 'PAID';
+            newBooking.notes = 'TEST_MODE_BOOKING';
+          }
+
           const docRef = await addDoc(collection(db, "bookings"), newBooking);
           merchantOid = docRef.id;
+
+          if (IS_TEST_MODE) {
+            window.location.href = "/success";
+            return;
+          }
         }
       } catch (fbErr) {
         console.warn("Firebase kaydı atlandı:", fbErr.message);

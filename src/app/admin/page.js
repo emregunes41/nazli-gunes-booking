@@ -85,7 +85,18 @@ export default function AdminPage() {
                 bookings.map((booking) => (
                   <tr key={booking.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
                      <td className="p-4 border-r border-white/5">
-                        <div className="font-semibold">{booking.date ? format(new Date(booking.date), "dd MMM yyyy", { locale: tr }) : "Bilinmiyor"}</div>
+                        <div className="font-semibold">
+                          {(() => {
+                            if (!booking.date) return "Bilinmiyor";
+                            try {
+                              const d = new Date(booking.date);
+                              if (isNaN(d.getTime())) return "Geçersiz Tarih";
+                              return format(d, "dd MMM yyyy", { locale: tr });
+                            } catch (e) {
+                              return "Hatalı Format";
+                            }
+                          })()}
+                        </div>
                         <div className="text-sm text-primary">{booking.time || "Bilinmiyor"}</div>
                      </td>
                      <td className="p-4 border-r border-white/5 font-medium">
