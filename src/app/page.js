@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Calendar as CalendarIcon, ArrowRight, Video, ArrowLeft, Loader2 } from "lucide-react";
+import { Sparkles, Calendar as CalendarIcon, ArrowRight, Video, ArrowLeft, Loader2, Instagram } from "lucide-react";
 import BookingCalendar from "@/components/BookingCalendar";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -10,7 +10,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 export default function Home() {
   const [step, setStep] = useState(1); // 1 = Hero, 2 = Calendar, 3 = Form, 4 = Payment Iframe
   const [bookingData, setBookingData] = useState({ date: null, time: null });
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', note: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', brandStory: '', targetAudience: '', competitors: '', challenge: '', previousTraining: '', topics: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paytrToken, setPaytrToken] = useState("");
   const calendarRef = useRef(null);
@@ -51,7 +51,12 @@ export default function Home() {
             name: formData.name,
             email: formData.email,
             phone: formData.phone,
-            note: formData.note,
+            brandStory: formData.brandStory,
+            targetAudience: formData.targetAudience,
+            competitors: formData.competitors,
+            challenge: formData.challenge,
+            previousTraining: formData.previousTraining,
+            topics: formData.topics,
             status: 'PENDING',
             createdAt: serverTimestamp(),
             amount
@@ -122,7 +127,7 @@ export default function Home() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/30 mb-8 mt-24"
         >
           <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium tracking-wide text-primary">Birebir Özel Danışmanlık</span>
+          <span className="text-sm font-medium tracking-wide text-primary">With Nazlı Güneş · Birebir Özel Danışmanlık</span>
         </motion.div>
 
         <motion.h1 
@@ -139,9 +144,18 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="max-w-2xl text-lg sm:text-xl text-text-muted mb-12"
+          className="max-w-2xl text-lg sm:text-xl text-text-muted mb-4"
         >
           İçerik stratejiniz tıkandı mı? Strateji, kurgu ve büyüme odaklı tek seferlik özel danışmanlık ile potansiyelinizi açığa çıkarın.
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="text-sm text-primary/70 mb-12 tracking-widest uppercase"
+        >
+          @withnazligunes
         </motion.p>
 
         <motion.div 
@@ -245,24 +259,59 @@ export default function Home() {
                  </div>
                  
                  <form onSubmit={submitBooking} className="flex flex-col gap-5">
+                   {/* Kişisel Bilgiler */}
                    <div className="flex flex-col gap-2">
-                     <label className="text-sm font-medium text-white/80">Ad Soyad</label>
+                     <label className="text-sm font-medium text-white/80">Ad Soyad *</label>
                      <input required type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="Örn: Nazlı Güneş" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30" />
                    </div>
                    
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="flex flex-col gap-2">
+                       <label className="text-sm font-medium text-white/80">E-posta Adresi *</label>
+                       <input required type="email" name="email" value={formData.email} onChange={handleFormChange} placeholder="ornek@mail.com" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30" />
+                     </div>
+                     <div className="flex flex-col gap-2">
+                       <label className="text-sm font-medium text-white/80">Telefon Numarası *</label>
+                       <input required type="tel" name="phone" value={formData.phone} onChange={handleFormChange} placeholder="+90 555 000 00 00" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30" />
+                     </div>
+                   </div>
+
+                   {/* Ayırıcı */}
+                   <div className="border-t border-white/10 my-2" />
+                   <p className="text-xs text-primary/60 uppercase tracking-widest">Danışmanlık Öncesi Sorular</p>
+
                    <div className="flex flex-col gap-2">
-                     <label className="text-sm font-medium text-white/80">E-posta Adresi</label>
-                     <input required type="email" name="email" value={formData.email} onChange={handleFormChange} placeholder="ornek@mail.com" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30" />
+                     <label className="text-sm font-medium text-white/80">Marka hikayenizi anlatır mısınız?</label>
+                     <textarea name="brandStory" value={formData.brandStory} onChange={handleFormChange} rows="3" placeholder="Markanızın kuruluş öyküsü, vizyonu ve değerleri..." className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30 resize-none" />
                    </div>
 
                    <div className="flex flex-col gap-2">
-                     <label className="text-sm font-medium text-white/80">Telefon Numarası</label>
-                     <input required type="tel" name="phone" value={formData.phone} onChange={handleFormChange} placeholder="+90 (555) 000 00 00" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30" />
+                     <label className="text-sm font-medium text-white/80">Hedef kitlenizi tanımlar mısınız?</label>
+                     <textarea name="targetAudience" value={formData.targetAudience} onChange={handleFormChange} rows="3" placeholder="Kimler, gün içinde ne yaparlar, neden sizi takip etmeliler?" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30 resize-none" />
                    </div>
 
                    <div className="flex flex-col gap-2">
-                     <label className="text-sm font-medium text-white/80">Danışmanlık Beklentiniz (Opsiyonel)</label>
-                     <textarea name="note" value={formData.note} onChange={handleFormChange} rows="3" placeholder="Görüşmede özellikle değinmemi istediğiniz konular var mı?" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30 resize-none" />
+                     <label className="text-sm font-medium text-white/80">Rakipleriniz kimler?</label>
+                     <textarea name="competitors" value={formData.competitors} onChange={handleFormChange} rows="2" placeholder="Rakip hesapların Instagram/TikTok linklerini paylaşabilirsiniz" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30 resize-none" />
+                   </div>
+
+                   <div className="flex flex-col gap-2">
+                     <label className="text-sm font-medium text-white/80">Süreçte en çok hangi konuda zorlanıyorsunuz?</label>
+                     <textarea name="challenge" value={formData.challenge} onChange={handleFormChange} rows="2" placeholder="İçerik üretimi, etkileşim, büyüme, kurgu, düzen..." className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30 resize-none" />
+                   </div>
+
+                   <div className="flex flex-col gap-2">
+                     <label className="text-sm font-medium text-white/80">Daha önce bir eğitimime katıldınız mı?</label>
+                     <select name="previousTraining" value={formData.previousTraining} onChange={handleFormChange} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none">
+                       <option value="" className="bg-black">Seçiniz</option>
+                       <option value="evet" className="bg-black">Evet, daha önce katıldım</option>
+                       <option value="hayir" className="bg-black">Hayır, ilk kez</option>
+                     </select>
+                   </div>
+
+                   <div className="flex flex-col gap-2">
+                     <label className="text-sm font-medium text-white/80">Görüşmede özellikle konuşmamızı istediğiniz konular</label>
+                     <textarea name="topics" value={formData.topics} onChange={handleFormChange} rows="3" placeholder="Özellikle değinmemi istediğiniz konular var mı?" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30 resize-none" />
                    </div>
 
                    <button disabled={isSubmitting} type="submit" className="w-full py-4 mt-4 bg-primary text-black font-semibold rounded-xl hover:bg-primary-hover transition-colors flex justify-center items-center gap-2 disabled:opacity-70">
@@ -292,6 +341,22 @@ export default function Home() {
           </motion.section>
         )}
       </AnimatePresence>
+
+      {/* FOOTER */}
+      <footer className="relative z-10 w-full border-t border-white/10 py-8 mt-auto">
+        <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+              <span className="text-primary font-bold text-sm">N</span>
+            </div>
+            <span className="text-sm text-white/60">© 2026 <span className="text-white/90 font-medium">With Nazlı Güneş</span> — Tüm hakları saklıdır.</span>
+          </div>
+          <a href="https://instagram.com/withnazligunes" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-white/50 hover:text-primary transition-colors">
+            <Instagram className="w-4 h-4" />
+            @withnazligunes
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
