@@ -5,7 +5,7 @@ import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } fro
 import { db } from "@/lib/firebase";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Trash2, Edit3, X, Check, RefreshCw, Mail, Eye, Loader2 } from "lucide-react";
+import { Trash2, Edit3, X, Check, RefreshCw, Mail, Eye, Loader2, Search, Users, Calendar, Phone } from "lucide-react";
 
 export default function AdminPage() {
   const [bookings, setBookings] = useState([]);
@@ -14,6 +14,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [editingBooking, setEditingBooking] = useState(null);
   const [viewingBooking, setViewingBooking] = useState(null);
