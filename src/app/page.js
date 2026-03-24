@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Calendar as CalendarIcon, ArrowRight, Video, ArrowLeft, Loader2, Instagram } from "lucide-react";
 import BookingCalendar from "@/components/BookingCalendar";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from "firebase/firestore";
 
-const IS_TEST_MODE = true; // Set to false for real payments
+const IS_TEST_MODE = false; // Real payments and real persistence required
 
 export default function Home() {
   const [step, setStep] = useState(1); // 1 = Hero, 2 = Calendar, 3 = Form, 4 = Payment Iframe
@@ -15,7 +17,46 @@ export default function Home() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', brandStory: '', targetAudience: '', competitors: '', challenge: '', previousTraining: '', topics: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paytrToken, setPaytrToken] = useState("");
+  const [bookedSlots, setBookedSlots] = useState([]); // Array of {date: "YYYY-MM-DD", time: "HH:MM"}
   const calendarRef = useRef(null);
+
+  // Fetch booked slots from Firebase
+  useEffect(() => {
+    if (!db) {
+      // Simulation for local development without Firebase
+      console.log("Firebase dev dışı - Test için örnek 'Dolu' slot eklendi.");
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      setBookedSlots([{ date: tomorrowStr, time: "10:00" }]);
+      return;
+    }
+
+    const q = query(collection(db, "bookings"), where("status", "==", "PAID"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const slots = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.date && data.time) {
+          // data.date is already yyyy-MM-dd string or ISO string
+          let dateStr = data.date;
+          if (dateStr.includes('T')) {
+            // Fallback for old ISO format entries
+            const d = new Date(dateStr);
+            dateStr = d.toISOString().split('T')[0];
+          }
+          slots.push({
+            date: dateStr,
+            time: data.time
+          });
+        }
+      });
+      setBookedSlots(slots);
+    });
+
+    return () => unsubscribe();
+  }, [db]);
 
   const startBooking = () => {
     setStep(2);
@@ -41,48 +82,56 @@ export default function Home() {
     setIsSubmitting(true);
 
     try {
-      const amount = 3500; // 3500 TL
-      let merchantOid = "NG_" + Date.now(); // Fallback OID
-
-      // 1. Try to save to Firebase if configured
-      try {
-        if (db) {
-          const newBooking = {
-            date: bookingData.date?.toISOString(),
-            time: bookingData.time,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            brandStory: formData.brandStory,
-            targetAudience: formData.targetAudience,
-            competitors: formData.competitors,
-            challenge: formData.challenge,
-            previousTraining: formData.previousTraining,
-            topics: formData.topics,
-            status: 'PENDING',
-            createdAt: serverTimestamp(),
-            amount
-          };
-
-          if (IS_TEST_MODE) {
-            newBooking.status = 'PAID';
-            newBooking.notes = 'TEST_MODE_BOOKING';
-          }
-
-          const docRef = await addDoc(collection(db, "bookings"), newBooking);
-          merchantOid = docRef.id;
-
-          if (IS_TEST_MODE) {
-            window.location.href = "/success";
-            return;
-          }
-        }
-      } catch (fbErr) {
-        console.warn("Firebase kaydı atlandı:", fbErr.message);
-        // Continue without Firebase — payment still goes through
+      if (!db) {
+        throw new Error("Firebase veritabanı bağlantısı kurulamadı. Lütfen yapılandırmayı kontrol edin.");
       }
 
-      // 2. Fetch PayTR Token
+      const amount = 3500; // 3500 TL
+      let merchantOid = "NG_" + Date.now();
+
+      console.log("Firestore kaydı başlatılıyor... Veri:", { date: bookingData.date, time: bookingData.time });
+      
+      const newBooking = {
+        date: bookingData.date ? format(bookingData.date, "yyyy-MM-dd") : null,
+        time: bookingData.time,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        brandStory: formData.brandStory,
+        targetAudience: formData.targetAudience,
+        competitors: formData.competitors,
+        challenge: formData.challenge,
+        previousTraining: formData.previousTraining,
+        topics: formData.topics,
+        status: IS_TEST_MODE ? 'PAID' : 'PENDING',
+        notes: IS_TEST_MODE ? 'TEST_MODE_BOOKING' : 'REAL_BOOKING_INITIATED',
+        createdAt: serverTimestamp(),
+        amount
+      };
+
+      // 1. KESİN KAYIT (Burası başarısız olursa ilerleme)
+      let docRef;
+      try {
+        console.log("Firestore 'addDoc' çağrılıyor...");
+        docRef = await addDoc(collection(db, "bookings"), newBooking);
+        console.log("Firestore kaydı başarılı. ID:", docRef.id);
+        merchantOid = docRef.id;
+      } catch (fbErr) {
+        console.error("Firestore Yazma Hatası:", fbErr);
+        throw new Error("Veritabanına kaydedilemedi: " + fbErr.message + ". İnternet bağlantınızı veya Firestore kurallarını kontrol edin.");
+      }
+
+      // 2. Ödeme Adımı
+      if (IS_TEST_MODE) {
+        console.log("Test modu aktif: Başarılı kayıt sonrası yönlendiriliyor...");
+        setStep(4);
+        setTimeout(() => {
+          window.location.href = "/success";
+        }, 1000);
+        return;
+      }
+
+      console.log("PayTR token alınıyor... MerchantOID:", merchantOid);
       const paytrRes = await fetch("/api/paytr/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,17 +145,20 @@ export default function Home() {
         })
       });
 
+      console.log("PayTR yanıtı bekleniyor...");
       const paytrData = await paytrRes.json();
+      console.log("PayTR yanıtı alındı:", paytrData);
 
       if (paytrData.token) {
         setPaytrToken(paytrData.token);
-        setStep(4); // Move to iframe step
+        setStep(4);
       } else {
-        alert("Ödeme altyapısı başlatılamadı: " + (paytrData.error || "Bilinmeyen hata"));
+        throw new Error("Ödeme altyapısı başlatılamadı: " + (paytrData.error || "Bilinmeyen hata"));
       }
+
     } catch (err) {
-      console.error("Booking Error:", err);
-      alert("Bir hata oluştu, lütfen tekrar deneyin.");
+      console.error("Booking Flow Error:", err);
+      alert(err.message || "Bir hata oluştu, lütfen tekrar deneyin.");
     } finally {
       setIsSubmitting(false);
     }
@@ -159,7 +211,7 @@ export default function Home() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="max-w-2xl text-lg sm:text-xl text-text-muted mb-4"
         >
-          İçerik stratejiniz tıkandı mı? Strateji, kurgu ve büyüme odaklı tek seferlik özel danışmanlık ile potansiyelinizi açığa çıkarın.
+          İçerik stratejiniz tıkandı mı? Profil analizi, düzenleme fikirleri, kurgu ve büyüme odaklı tek seferlik özel danışmanlık ile potansiyelinizi açığa çıkarın.
         </motion.p>
 
         <motion.p
@@ -175,17 +227,18 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-col sm:flex-row items-center gap-4"
+          className="flex flex-col items-center gap-4"
         >
           <button 
             onClick={startBooking}
-            className="group relative w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-primary text-black font-semibold rounded-full overflow-hidden transition-all hover:scale-105 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
+            className="group relative w-full sm:w-auto flex flex-col items-center gap-0 px-10 py-4 bg-primary text-black font-semibold rounded-full overflow-hidden transition-all hover:scale-105 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
           >
-            <span className="relative z-10 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5" />
-              Hemen Randevu Al
+              <span>Hemen Randevu Al</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </span>
+            </div>
+            <div className="text-[10px] uppercase tracking-widest opacity-70 mt-[-2px]">3.500 TL / 45 Dakika</div>
           </button>
         </motion.div>
 
@@ -200,16 +253,16 @@ export default function Home() {
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Video className="w-6 h-6 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Birebir Görüşme</h3>
-            <p className="text-sm text-text-muted">45 dakikalık yoğun ve hedefe yönelik online strateji toplantısı.</p>
+            <h3 className="text-lg font-semibold mb-2">Profil & İçerik</h3>
+            <p className="text-sm text-text-muted">Profil analizi, bio düzenleme ve kitlenize özel video/senaryo fikirleri.</p>
           </div>
           
           <div className="glass glass-hover p-6 rounded-2xl flex flex-col items-center text-center transition-all">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Sparkles className="w-6 h-6 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">İçerik Kurgusu</h3>
-            <p className="text-sm text-text-muted">Profilinize ve kitlenize en uygun video/içerik senaryo fikirleri.</p>
+            <h3 className="text-lg font-semibold mb-2">Gelişmiş Strateji</h3>
+            <p className="text-sm text-text-muted">Algoritma dostu paylaşım saatleri, hashtag kullanımı ve büyüme sırları.</p>
           </div>
           
           <div className="glass glass-hover p-6 rounded-2xl flex flex-col items-center text-center transition-all">
@@ -217,7 +270,7 @@ export default function Home() {
               <CalendarIcon className="w-6 h-6 text-primary" />
             </div>
             <h3 className="text-lg font-semibold mb-2">Hızlı Planlama</h3>
-            <p className="text-sm text-text-muted">Size uygun zamanı seçin, güvenle ödeyin ve randevunuzu anında alın.</p>
+            <p className="text-sm text-text-muted">Size uygun zamanı seçin (3.500 TL), online ödemenizi yapın ve randevuyu kapın.</p>
           </div>
         </motion.div>
       </main>
@@ -237,7 +290,7 @@ export default function Home() {
                   <h2 className="text-3xl md:text-4xl font-bold mb-4">Ne Zaman Görüşelim?</h2>
                   <p className="text-text-muted max-w-lg">Size en uygun gün ve saati seçerek randevu sürecini başlatın.</p>
                 </div>
-                <BookingCalendar onSelectDateTime={handleDateTimeSelect} />
+                <BookingCalendar onSelectDateTime={handleDateTimeSelect} bookedSlots={bookedSlots} />
                 
                 {bookingData.time && (
                   <div className="flex justify-center mt-12 w-full">

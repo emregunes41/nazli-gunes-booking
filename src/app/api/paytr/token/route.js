@@ -11,9 +11,9 @@ export async function POST(req) {
     const userIp = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || headersList.get('x-real-ip') || '127.0.0.1';
 
     // These credentials should be set in .env.local
-    const merchant_id = process.env.PAYTR_MERCHANT_ID;
-    const merchant_key = process.env.PAYTR_MERCHANT_KEY;
-    const merchant_salt = process.env.PAYTR_MERCHANT_SALT;
+    const merchant_id = process.env.PAYTR_MERCHANT_ID?.trim();
+    const merchant_key = process.env.PAYTR_MERCHANT_KEY?.trim();
+    const merchant_salt = process.env.PAYTR_MERCHANT_SALT?.trim();
 
     if (!merchant_id || !merchant_key || !merchant_salt) {
       console.warn("PayTR credentials not found in environment.");
@@ -29,11 +29,11 @@ export async function POST(req) {
     const user_ip_str = userIp || "127.0.0.1";
     
     // Standard required params
-    const merchant_ok_url = `${process.env.NEXT_PUBLIC_APP_URL}/success`;
-    const merchant_fail_url = `${process.env.NEXT_PUBLIC_APP_URL}/fail`;
+    const merchant_ok_url = `${process.env.NEXT_PUBLIC_APP_URL?.trim()}/success`;
+    const merchant_fail_url = `${process.env.NEXT_PUBLIC_APP_URL?.trim()}/fail`;
     const timeout_limit = "30";
     const debug_on = "1";
-    const test_mode = process.env.NEXT_PUBLIC_PAYTR_TEST_MODE === "1" ? "1" : "0";
+    const test_mode = process.env.NEXT_PUBLIC_PAYTR_TEST_MODE?.trim() === "1" ? "1" : "0";
     const no_installment = "0";
     const max_installment = "0";
     const currency = "TL";

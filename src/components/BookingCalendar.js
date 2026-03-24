@@ -10,11 +10,17 @@ const TIME_SLOTS = [
   "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"
 ];
 
-export default function BookingCalendar({ onSelectDateTime }) {
+export default function BookingCalendar({ onSelectDateTime, bookedSlots = [] }) {
   const [mounted, setMounted] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
+
+  const isSlotBooked = (date, time) => {
+    if (!date) return false;
+    const dateStr = format(date, "yyyy-MM-dd");
+    return bookedSlots.some(slot => slot.date === dateStr && slot.time === time);
+  };
 
   // Avoid hydration mismatch by only rendering after mount
   useEffect(() => {
@@ -157,20 +163,25 @@ export default function BookingCalendar({ onSelectDateTime }) {
                 {format(selectedDate, "d MMMM yyyy, EEEE", { locale: tr })}
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {TIME_SLOTS.map((time) => (
-                  <button
-                    key={time}
-                    onClick={() => handleTimeSelect(time)}
-                    className={`
-                      py-3 px-4 rounded-xl text-sm font-medium transition-all
-                      ${selectedTime === time 
-                        ? 'bg-primary text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]' 
-                        : 'bg-white/5 hover:bg-white/15 border border-white/10'}
-                    `}
-                  >
-                    {time}
-                  </button>
-                ))}
+                {TIME_SLOTS.map((time) => {
+                  const isBooked = isSlotBooked(selectedDate, time);
+                  return (
+                    <button
+                      key={time}
+                      disabled={isBooked}
+                      onClick={() => handleTimeSelect(time)}
+                      className={`
+                        py-3 px-4 rounded-xl text-sm font-medium transition-all
+                        ${isBooked ? 'opacity-20 cursor-not-allowed grayscale' : ''}
+                        ${selectedTime === time 
+                          ? 'bg-primary text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]' 
+                          : !isBooked ? 'bg-white/5 hover:bg-white/15 border border-white/10' : 'bg-white/5 border border-white/5'}
+                      `}
+                    >
+                      {isBooked ? "Dolu" : time}
+                    </button>
+                  );
+                })}
               </div>
             </motion.div>
           )}
