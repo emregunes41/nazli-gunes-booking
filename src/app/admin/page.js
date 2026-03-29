@@ -193,10 +193,14 @@ export default function AdminPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-black italic tracking-tighter">İşlem Paneli</h1>
           <button 
-            onClick={() => activeTab === "bookings" ? window.location.reload() : fetchUsers()}
+            onClick={() => {
+              if (activeTab === "bookings") window.location.reload();
+              else if (activeTab === "users") fetchUsers();
+              else if (activeTab === "reviews") fetchReviews();
+            }}
             className="p-2 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-all text-primary"
           >
-            <RefreshCw className={`w-5 h-5 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-5 h-5 ${isLoadingUsers || isLoadingReviews ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
@@ -242,9 +246,18 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {reviews.length === 0 ? (
+                {isLoadingReviews ? (
                   <tr>
-                    <td colSpan="5" className="p-8 text-center text-text-muted">Henüz yorum bulunmuyor.</td>
+                    <td colSpan="5" className="p-12 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <span className="text-text-muted text-sm font-medium">Yorumlar yükleniyor...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : reviews.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="p-12 text-center text-text-muted">Henüz yorum bulunmuyor.</td>
                   </tr>
                 ) : (
                   reviews.map((r) => (
