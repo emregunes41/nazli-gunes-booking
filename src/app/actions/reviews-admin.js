@@ -21,7 +21,20 @@ export async function getAllReviews() {
       code: error.code,
       meta: error.meta
     });
-    throw error; // Let the component handle it or show error
+    throw error;
+  }
+}
+
+export async function getApprovedReviews() {
+  try {
+    if (!prisma.review) return [];
+    return await prisma.review.findMany({
+      where: { isApproved: true },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Public Fetch Success:", error);
+    return [];
   }
 }
 
@@ -49,19 +62,6 @@ export async function deleteReview(id) {
   } catch (error) {
     console.error("Delete Review Error:", error);
     return { error: "Silme hatası." };
-  }
-}
-
-export async function getApprovedReviews() {
-  try {
-    if (!prisma.review) return [];
-    return await prisma.review.findMany({
-      where: { isApproved: true },
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
-    console.error("Public Fetch Success:", error);
-    return [];
   }
 }
 
