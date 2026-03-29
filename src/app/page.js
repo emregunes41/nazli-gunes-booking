@@ -212,7 +212,7 @@ export default function Home() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="max-w-2xl text-lg sm:text-xl text-text-muted mb-4"
         >
-          İçerik stratejiniz tıkandı mı? Profil analizi, düzenleme fikirleri, kurgu ve büyüme odaklı tek seferlik özel danışmanlık ile potansiyelinizi açığa çıkarın.
+          İçerik stratejiniz tıkandı mı? Profil analizi, düzenleme fikirleri, kurgu, büyüme odaklı stratejiler ve videographer ile video kalite, tarz, ekipman danışmanlığı sayesinde potansiyelinizi açığa çıkarın.
         </motion.p>
 
         <motion.p
@@ -254,8 +254,8 @@ export default function Home() {
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Video className="w-6 h-6 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Profil & İçerik</h3>
-            <p className="text-sm text-text-muted">Profil analizi, bio düzenleme ve kitlenize özel video/senaryo fikirleri.</p>
+            <h3 className="text-lg font-semibold mb-2">Profil, İçerik & Ekipman</h3>
+            <p className="text-sm text-text-muted">Profil analizi, bio düzenleme, kitlenize özel senaryo fikirleri ve videographer destekli video kalite/tarz danışmanlığı.</p>
           </div>
           
           <div className="glass glass-hover p-6 rounded-2xl flex flex-col items-center text-center transition-all">
