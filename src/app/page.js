@@ -4,12 +4,17 @@ import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Calendar as CalendarIcon, ArrowRight, Video, ArrowLeft, Loader2, Instagram, Check } from "lucide-react";
+import { Sparkles, Calendar as CalendarIcon, ArrowRight, Video, ArrowLeft, Loader2, Instagram, Check, Star } from "lucide-react";
 import BookingCalendar from "@/components/BookingCalendar";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from "firebase/firestore";
 
 const IS_TEST_MODE = false; // Real payments and real persistence required
+const TESTIMONIALS = [
+  { name: "Ayşe Y.", handle: "@aysedesign", text: "Nazlı Hanım ile yaptığımız görüşme profilim için dönüm noktası oldu. İçerik ve kurgu fikirleri gerçekten vizyon katıyor. Kesinlikle tavsiye ederim!", stars: 5 },
+  { name: "Mehmet K.", handle: "@mehmetstudio", text: "Aylık danışmanlık paketi sayesinde Instagram'da büyüme hızım 3 kat arttı. Özellikle senaryo ve kurgu desteği mükemmel. Çok teşekkürler.", stars: 5 },
+  { name: "Selin T.", handle: "@selinbeauty", text: "Profil analizi ve bio düzenlemesi sonrası bile etkileşimlerim fark edilir şekilde arttı. İşini bu kadar profesyonel yapan biriyle çalışmak çok keyifli.", stars: 5 }
+];
 
 export default function Home() {
   const [step, setStep] = useState(1); // 1 = Hero, 2 = Calendar, 3 = Form, 4 = Payment Iframe
@@ -416,6 +421,41 @@ export default function Home() {
           </motion.section>
         )}
       </AnimatePresence>
+
+      {/* TESTIMONIALS SECTION */}
+      <section className="relative w-full max-w-5xl px-6 py-24 mx-auto z-10 border-t border-white/10">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 italic">Birlikte Başardıklarımız</h2>
+          <p className="text-text-muted">Danışanlarımın başarı hikayeleri ve deneyimleri.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {TESTIMONIALS.map((t, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="glass p-8 rounded-3xl flex flex-col items-start gap-4 hover:border-primary/30 transition-all group"
+            >
+              <div className="flex gap-1 text-primary mb-2">
+                {[...Array(t.stars)].map((_, idx) => <Star key={idx} className="w-4 h-4 fill-primary" />)}
+              </div>
+              <p className="text-sm leading-relaxed text-white/90 italic">"{t.text}"</p>
+              <div className="mt-auto flex items-center gap-3 pt-6 w-full border-t border-white/5">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold border border-primary/20 shadow-inner group-hover:scale-110 transition-transform">
+                  {t.name[0]}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold">{t.name}</span>
+                  <span className="text-[10px] text-text-muted tracking-wide uppercase">{t.handle}</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
 
       {/* FOOTER */}
       <footer className="relative z-10 w-full border-t border-white/10 py-8 mt-auto">
