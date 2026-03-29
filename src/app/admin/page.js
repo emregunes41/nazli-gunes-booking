@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [reviewSubTab, setReviewSubTab] = useState("pending"); // "pending" or "published"
 
   const [editingBooking, setEditingBooking] = useState(null);
   const [viewingBooking, setViewingBooking] = useState(null);
@@ -242,10 +243,23 @@ export default function AdminPage() {
 
       {activeTab === "reviews" && (
         <div className="glass rounded-3xl overflow-hidden border border-white/10">
-          <div className="p-4 bg-white/5 border-b border-white/5 flex items-center justify-between">
-            <span className="text-xs uppercase tracking-widest text-text-muted font-bold">Yorum İstekleri</span>
-            <div className="text-xs bg-primary/20 text-primary px-3 py-1 rounded-full font-bold">
-              {reviews.length} Toplam
+          <div className="p-4 bg-white/5 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setReviewSubTab("pending")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${reviewSubTab === "pending" ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white/5 text-text-muted hover:bg-white/10'}`}
+              >
+                Onay Bekleyenler ({reviews.filter(r => !r.isApproved).length})
+              </button>
+              <button 
+                onClick={() => setReviewSubTab("published")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${reviewSubTab === "published" ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-white/5 text-text-muted hover:bg-white/10'}`}
+              >
+                Yayındakiler ({reviews.filter(r => r.isApproved).length})
+              </button>
+            </div>
+            <div className="text-xs bg-white/5 text-text-muted px-3 py-1.5 rounded-full font-medium border border-white/5">
+              {reviewSubTab === "pending" ? "Onay bekleyen yeni yorumlar" : "Sitede aktif görünen yorumlar"}
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -281,15 +295,17 @@ export default function AdminPage() {
                   </tr>
                 ) : reviews.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="p-12 text-center text-text-muted">Henüz bekleyen yorum bulunmuyor.</td>
+                    <td colSpan="5" className="p-12 text-center text-text-muted">Henüz hiç yorum gönderilmemiş.</td>
                   </tr>
                 ) : (
-                  reviews.filter(r => !r.isApproved).length === 0 ? (
+                  reviews.filter(r => reviewSubTab === "pending" ? !r.isApproved : r.isApproved).length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="p-12 text-center text-text-muted">Tüm yorumlar onaylanmış durumda.</td>
+                      <td colSpan="5" className="p-12 text-center text-text-muted">
+                        {reviewSubTab === "pending" ? "Harika! Bekleyen yeni yorum yok." : "Henüz yayınlanmış bir yorumunuz yok."}
+                      </td>
                     </tr>
                   ) : (
-                    reviews.filter(r => !r.isApproved).map((r) => (
+                    reviews.filter(r => reviewSubTab === "pending" ? !r.isApproved : r.isApproved).map((r) => (
                     <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
                       <td className="p-4 border-r border-white/5 text-xs">
                         {new Date(r.createdAt).toLocaleDateString("tr-TR")}
@@ -311,31 +327,46 @@ export default function AdminPage() {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
-                          {!r.isApproved && (
+                          {reviewSubTab === "pending" ? (
                             <button 
                               onClick={async () => {
+                                if (!confirm("Bu yorumu yayınlamak istediğinize emin misiniz?")) return;
                                 await updateReviewStatus(r.id, true);
                                 fetchReviews();
                               }}
                               className="p-1.5 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors"
+                              title="Onayla ve Yayınla"
                             >
                               <Check className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={async () => {
+                                if (!confirm("Bu yorumu yayından kaldırmak istediğinize emin misiniz?")) return;
+                                await updateReviewStatus(r.id, false);
+                                fetchReviews();
+                              }}
+                              className="p-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-colors"
+                              title="Yayından Kaldır"
+                            >
+                              <RefreshCw className="w-4 h-4" />
                             </button>
                           )}
                           <button 
                             onClick={() => setEditingReview(r)}
                             className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+                            title="Düzenle"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={async () => {
-                              if (confirm("Yorumu silmek istediğinize emin misiniz?")) {
-                                await deleteReview(r.id);
-                                fetchReviews();
-                              }
+                              if (!confirm("Bu yorumu tamamen silmek istediğinize emin misiniz?")) return;
+                              await deleteReview(r.id);
+                              fetchReviews();
                             }}
                             className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                            title="Tamamen Sil"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
