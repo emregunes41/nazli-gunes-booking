@@ -108,7 +108,7 @@ export default function Home() {
         throw new Error("Firebase veritabanı bağlantısı kurulamadı. Lütfen yapılandırmayı kontrol edin.");
       }
 
-      const amount = selectedPackage === 'monthly' ? 13500 : 3500;
+      const amount = selectedPackage === 'monthly' ? 15000 : 3500;
       let merchantOid = "NG_" + Date.now();
 
       console.log("Firestore kaydı başlatılıyor... Veri:", { date: bookingData.date, time: bookingData.time });
@@ -279,7 +279,7 @@ export default function Home() {
             <div className="absolute top-0 right-0 bg-primary text-black text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">En Popüler</div>
             <h3 className="text-2xl font-bold mb-2">Aylık Danışmanlık</h3>
             <p className="text-sm text-text-muted mb-6">1 aylık tam kapsamlı strateji, içerik yönetimi ve destek</p>
-            <div className="text-4xl font-black mb-6 text-gradient-gold">13.500 TL</div>
+            <div className="text-4xl font-black mb-6 text-gradient-gold">15.000 TL</div>
             
             <ul className="text-sm text-left text-white/80 space-y-3 mb-8 w-full flex-1">
                <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Detaylı profil analizi & font/tasarım kimliği</li>
