@@ -5,16 +5,23 @@ import { revalidatePath } from "next/cache";
 
 export async function getAllReviews() {
   try {
+    console.log("DEBUG: Review fetch started. DATABASE_URL present:", !!process.env.DATABASE_URL);
     if (!prisma.review) {
-      console.error("Prisma Error: 'Review' model is not defined in the Prisma client. Check schema sync.");
+      console.error("Prisma Error: 'Review' model is missing from Prisma Client.");
       return [];
     }
-    return await prisma.review.findMany({
+    const data = await prisma.review.findMany({
       orderBy: { createdAt: "desc" },
     });
+    console.log("DEBUG: Review fetch success. Count:", data.length);
+    return data;
   } catch (error) {
-    console.error("Review Fetch Failure (Vercel Log):", error.message, error.stack);
-    return [];
+    console.error("CRITICAL REVIEW FETCH ERROR:", {
+      message: error.message,
+      code: error.code,
+      meta: error.meta
+    });
+    throw error; // Let the component handle it or show error
   }
 }
 
