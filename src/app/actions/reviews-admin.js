@@ -45,6 +45,19 @@ export async function deleteReview(id) {
   }
 }
 
+export async function getApprovedReviews() {
+  try {
+    if (!prisma.review) return [];
+    return await prisma.review.findMany({
+      where: { isApproved: true },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Public Fetch Success:", error);
+    return [];
+  }
+}
+
 export async function updateReviewContent(id, data) {
   try {
     await prisma.review.update({

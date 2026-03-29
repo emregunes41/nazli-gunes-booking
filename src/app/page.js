@@ -8,6 +8,7 @@ import { Sparkles, Calendar as CalendarIcon, ArrowRight, Video, ArrowLeft, Loade
 import BookingCalendar from "@/components/BookingCalendar";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from "firebase/firestore";
+import { getApprovedReviews } from "./actions/reviews-admin";
 
 const IS_TEST_MODE = false; // Real payments and real persistence required
 const TESTIMONIALS = [
@@ -21,6 +22,7 @@ export default function Home() {
   const [selectedPackage, setSelectedPackage] = useState("single");
   const [bookingData, setBookingData] = useState({ date: null, time: null });
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', socialMedia: '', brandStory: '', targetAudience: '', competitors: '', challenge: '', previousTraining: '', topics: '' });
+  const [liveTestimonials, setLiveTestimonials] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paytrToken, setPaytrToken] = useState("");
   const [bookedSlots, setBookedSlots] = useState([]); // Array of {date: "YYYY-MM-DD", time: "HH:MM"}
@@ -63,6 +65,20 @@ export default function Home() {
 
     return () => unsubscribe();
   }, [db]);
+
+  useEffect(() => {
+    const fetchLiveReviews = async () => {
+      try {
+        const res = await getApprovedReviews();
+        if (res && res.length > 0) {
+          setLiveTestimonials(res.map(r => ({ ...r, stars: r.rating })));
+        }
+      } catch (err) {
+        console.error("Testimonials Fetch Error:", err);
+      }
+    };
+    fetchLiveReviews();
+  }, []);
 
   const startBooking = () => {
     setStep(2);
@@ -430,7 +446,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {TESTIMONIALS.map((t, i) => (
+          {(liveTestimonials.length > 0 ? liveTestimonials : TESTIMONIALS).map((t, i) => (
             <motion.div 
               key={i}
               initial={{ opacity: 0, y: 20 }}
