@@ -180,6 +180,26 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (!confirm("Bu üyeyi kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
+    
+    try {
+      const res = await fetch(`/api/admin/users?id=${userId}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok) {
+        fetchUsers();
+      } else {
+        const data = await res.json();
+        alert("Hata: " + (data.error || "Kullanıcı silinemedi"));
+      }
+    } catch (err) {
+      console.error("Delete user error:", err);
+      alert("Bir hata oluştu.");
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-black">
@@ -532,6 +552,7 @@ export default function AdminPage() {
                     <th className="p-4 font-semibold text-text-muted text-sm uppercase tracking-wider border-l border-white/5">İletişim</th>
                     <th className="p-4 font-semibold text-text-muted text-sm uppercase tracking-wider border-l border-white/5">Bilgiler</th>
                     <th className="p-4 font-semibold text-text-muted text-sm uppercase tracking-wider border-l border-white/5">Kayıt Tarihi</th>
+                    <th className="p-4 font-semibold text-text-muted text-sm uppercase tracking-wider border-l border-white/5 text-right">İşlemler</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -595,11 +616,20 @@ export default function AdminPage() {
                             )}
                           </div>
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 border-r border-white/5">
                           <div className="flex items-center gap-2 text-sm text-text-muted">
                             <Calendar className="w-3 h-3" />
                             {user.createdAt ? format(new Date(user.createdAt), "dd MMM yyyy", { locale: tr }) : "-"}
                           </div>
+                        </td>
+                        <td className="p-4 text-right">
+                          <button 
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                            title="Üyeyi Sil"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))
