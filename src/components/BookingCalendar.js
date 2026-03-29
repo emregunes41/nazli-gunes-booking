@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, isBefore, startOfToday } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, isBefore, startOfToday, addDays } from "date-fns";
 import { tr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,6 +48,7 @@ export default function BookingCalendar({ onSelectDateTime, bookedSlots = [] }) 
   }
 
   const today = startOfToday();
+  const minBookableDate = addDays(today, 2);
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
 
@@ -60,7 +61,7 @@ export default function BookingCalendar({ onSelectDateTime, bookedSlots = [] }) 
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
   const handleDateSelect = (day) => {
-    if (isBefore(day, today)) return;
+    if (isBefore(day, minBookableDate)) return;
     setSelectedDate(day);
     setSelectedTime(null);
   };
@@ -107,7 +108,7 @@ export default function BookingCalendar({ onSelectDateTime, bookedSlots = [] }) 
 
         <div className="grid grid-cols-7 gap-2">
           {daysInMonth.map((day, dayIdx) => {
-            const isPast = isBefore(day, today);
+            const isUnavailable = isBefore(day, minBookableDate);
             const isSelected = selectedDate && isSameDay(day, selectedDate);
             const isCurrentMonth = isSameMonth(day, currentDate);
             
@@ -118,12 +119,12 @@ export default function BookingCalendar({ onSelectDateTime, bookedSlots = [] }) 
               <button
                 key={day.toString()}
                 onClick={() => handleDateSelect(day)}
-                disabled={isPast || !isCurrentMonth}
+                disabled={isUnavailable || !isCurrentMonth}
                 style={{ gridColumnStart: colStart !== 'auto' ? colStart : 'auto' }}
                 className={`
                   aspect-square rounded-xl flex items-center justify-center text-sm transition-all
                   ${!isCurrentMonth ? 'invisible' : ''}
-                  ${isPast ? 'opacity-30 cursor-not-allowed' : 'hover:bg-primary/20 cursor-pointer'}
+                  ${isUnavailable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-primary/20 cursor-pointer'}
                   ${isSelected ? 'bg-primary text-black font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)]' : 'bg-white/5'}
                   ${isToday(day) && !isSelected ? 'border border-primary/50' : ''}
                 `}

@@ -46,7 +46,25 @@ export default function AdminPage() {
     setIsUpdating(true);
     try {
       const { id, ...data } = editingBooking;
+      
+      const oldBooking = bookings.find(b => b.id === id);
+      const isNewlyPaid = (oldBooking && oldBooking.status !== "PAID" && data.status === "PAID");
+
       await updateDoc(doc(db, "bookings", id), data);
+      
+      if (isNewlyPaid) {
+        try {
+          await fetch("/api/send-success-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ booking: { ...oldBooking, ...data } })
+          });
+        } catch (emailErr) {
+          console.error("E-posta gönderim hatası:", emailErr);
+          alert("Durum güncellendi ancak onay mailleri gönderilemedi!");
+        }
+      }
+
       setEditingBooking(null);
     } catch (err) {
       alert("Güncelleme hatası: " + err.message);
