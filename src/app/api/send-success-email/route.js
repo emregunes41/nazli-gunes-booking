@@ -70,6 +70,10 @@ export async function POST(req) {
               <td style="padding: 10px; border-bottom: 1px solid #ddd;">${booking.phone || '-'}</td>
             </tr>
             <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Sosyal Medya:</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;">${booking.socialMedia || '-'}</td>
+            </tr>
+            <tr>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Tarih / Saat:</strong></td>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;">${formattedDate} - ${time}</td>
             </tr>

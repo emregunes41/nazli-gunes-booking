@@ -525,6 +525,7 @@ export default function AdminPage() {
 
               <div className="space-y-4">
                 {[
+                  { label: "Sosyal Medya", value: viewingBooking.socialMedia },
                   { label: "Marka Hikayesi", value: viewingBooking.brandStory },
                   { label: "Hedef Kitle", value: viewingBooking.targetAudience },
                   { label: "Rakipler", value: viewingBooking.competitors },

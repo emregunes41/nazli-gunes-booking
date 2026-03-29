@@ -14,7 +14,7 @@ const IS_TEST_MODE = false; // Real payments and real persistence required
 export default function Home() {
   const [step, setStep] = useState(1); // 1 = Hero, 2 = Calendar, 3 = Form, 4 = Payment Iframe
   const [bookingData, setBookingData] = useState({ date: null, time: null });
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', brandStory: '', targetAudience: '', competitors: '', challenge: '', previousTraining: '', topics: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', socialMedia: '', brandStory: '', targetAudience: '', competitors: '', challenge: '', previousTraining: '', topics: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paytrToken, setPaytrToken] = useState("");
   const [bookedSlots, setBookedSlots] = useState([]); // Array of {date: "YYYY-MM-DD", time: "HH:MM"}
@@ -97,6 +97,7 @@ export default function Home() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        socialMedia: formData.socialMedia,
         brandStory: formData.brandStory,
         targetAudience: formData.targetAudience,
         competitors: formData.competitors,
@@ -340,6 +341,11 @@ export default function Home() {
                        <label className="text-sm font-medium text-white/80">Telefon Numarası *</label>
                        <input required type="tel" name="phone" value={formData.phone} onChange={handleFormChange} placeholder="+90 555 000 00 00" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30" />
                      </div>
+                   </div>
+
+                   <div className="flex flex-col gap-2">
+                     <label className="text-sm font-medium text-white/80">Sosyal Medya Hesabınız (Kullanıcı adı veya Link) *</label>
+                     <input required type="text" name="socialMedia" value={formData.socialMedia} onChange={handleFormChange} placeholder="@kullanici_adi veya https://instagram.com/..." className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-white/30" />
                    </div>
 
                    {/* Ayırıcı */}
