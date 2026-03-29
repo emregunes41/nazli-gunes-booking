@@ -5,11 +5,15 @@ import { revalidatePath } from "next/cache";
 
 export async function getAllReviews() {
   try {
+    if (!prisma.review) {
+      console.error("Prisma Error: 'Review' model is not defined in the Prisma client. Check schema sync.");
+      return [];
+    }
     return await prisma.review.findMany({
       orderBy: { createdAt: "desc" },
     });
   } catch (error) {
-    console.error("Get All Reviews Error:", error);
+    console.error("Review Fetch Failure (Vercel Log):", error.message, error.stack);
     return [];
   }
 }

@@ -14,6 +14,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("bookings"); // "bookings", "users" or "reviews"
   const [reviews, setReviews] = useState([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [hasReviewsError, setHasReviewsError] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
@@ -37,9 +38,22 @@ export default function AdminPage() {
 
   const fetchReviews = async () => {
     setIsLoadingReviews(true);
-    const res = await getAllReviews();
-    setReviews(res);
-    setIsLoadingReviews(false);
+    setHasReviewsError(false);
+    try {
+      const res = await getAllReviews();
+      if (!res || (Array.isArray(res) && res.length === 0)) {
+        // Not necessarily an error, just empty
+        setReviews([]);
+      } else {
+        setReviews(res);
+      }
+    } catch (err) {
+      console.error("Fetch Reviews Error:", err);
+      setHasReviewsError(true);
+      setReviews([]);
+    } finally {
+      setIsLoadingReviews(false);
+    }
   };
 
   useEffect(() => {
@@ -255,12 +269,27 @@ export default function AdminPage() {
                       </div>
                     </td>
                   </tr>
+                ) : hasReviewsError ? (
+                  <tr>
+                    <td colSpan="5" className="p-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="text-red-400 font-bold">Veri Bağlantı Hatası!</span>
+                        <p className="text-xs text-text-muted">Database URL eksik veya tablo bulunamadı.</p>
+                        <button onClick={fetchReviews} className="mt-2 text-xs text-primary hover:underline">Yeniden Dene</button>
+                      </div>
+                    </td>
+                  </tr>
                 ) : reviews.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="p-12 text-center text-text-muted">Henüz yorum bulunmuyor.</td>
+                    <td colSpan="5" className="p-12 text-center text-text-muted">Henüz bekleyen yorum bulunmuyor.</td>
                   </tr>
                 ) : (
-                  reviews.map((r) => (
+                  reviews.filter(r => !r.isApproved).length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="p-12 text-center text-text-muted">Tüm yorumlar onaylanmış durumda.</td>
+                    </tr>
+                  ) : (
+                    reviews.filter(r => !r.isApproved).map((r) => (
                     <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
                       <td className="p-4 border-r border-white/5 text-xs">
                         {new Date(r.createdAt).toLocaleDateString("tr-TR")}
@@ -313,13 +342,15 @@ export default function AdminPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                    ))
+                  )
+                )
+              }
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
+    )}
 
       {activeTab === "bookings" ? (
         <div className="glass rounded-3xl overflow-hidden border border-white/10">
