@@ -247,8 +247,14 @@ export default function AdminPage() {
                         </div>
                         <div className="text-sm text-primary">{booking.time || "Bilinmiyor"}</div>
                      </td>
-                     <td className="p-4 border-r border-white/5 font-medium">
+                     <td className="p-4 border-r border-white/5 font-medium flex flex-col gap-1 items-start">
                         {booking.name}
+                        {booking.package === 'monthly' && (
+                          <span className="text-[10px] text-primary border border-primary/20 px-2 py-0.5 rounded-full bg-primary/10 tracking-widest uppercase">Aylık Danışmanlık</span>
+                        )}
+                        {(!booking.package || booking.package === 'single') && (
+                          <span className="text-[10px] text-text-muted border border-white/10 px-2 py-0.5 rounded-full bg-white/5 tracking-widest uppercase">Tek Seferlik</span>
+                        )}
                      </td>
                      <td className="p-4 border-r border-white/5">
                         <div className="text-sm truncate max-w-[200px]">{booking.email}</div>
@@ -514,8 +520,15 @@ export default function AdminPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/10">
                 <div>
-                  <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Danışan</p>
-                  <p className="font-semibold">{viewingBooking.name}</p>
+                  <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Danışan & Paket</p>
+                  <p className="font-semibold flex items-center gap-2">
+                    {viewingBooking.name}
+                    {viewingBooking.package === 'monthly' ? (
+                      <span className="text-[10px] text-primary border border-primary/20 px-2 py-0.5 rounded-full bg-primary/10 tracking-widest uppercase">Aylık</span>
+                    ) : (
+                      <span className="text-[10px] text-text-muted border border-white/10 px-2 py-0.5 rounded-full bg-white/5 tracking-widest uppercase">Birebir</span>
+                    )}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Randevu</p>

@@ -17,19 +17,20 @@ export async function POST(req) {
       return NextResponse.json({ message: "Geçersiz istek: Booking veya e-posta eksik." }, { status: 400 });
     }
 
-    const { name, email, date, time } = booking;
+    const { name, email, date, time, package: pkg } = booking;
     const formattedDate = date ? new Date(date).toLocaleDateString("tr-TR") : "Bilinmiyor";
+    const packageName = pkg === 'monthly' ? "Aylık Danışmanlık" : "Birebir Danışmanlık";
 
     // 1. Müşteriye giden mail
     const customerMail = resend.emails.send({
       from: 'Nazlı Güneş <bilgi@withnazligunes.com>',
       to: [email],
-      subject: 'Ödemeniz Alındı - Randevunuz Onaylandı',
+      subject: `Ödemeniz Alındı - ${packageName} Randevunuz Onaylandı`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
           <h1 style="color: #D4AF37;">Merhaba ${name},</h1>
           <p style="font-size: 16px; line-height: 1.5;">
-            Ödemeniz başarıyla alınmıştır. <strong>${formattedDate}</strong> tarihi saat <strong>${time}</strong> için danışmanlık randevunuz onaylandı.
+            Ödemeniz başarıyla alınmıştır. <strong>${packageName}</strong> kapsamında <strong>${formattedDate}</strong> tarihi saat <strong>${time}</strong> için ilk görüşme randevunuz onaylandı.
           </p>
           <p style="font-size: 14px; color: #666;">
             Görüşme linkiniz (Zoom) etkinlikten uygun bir süre önce ayrı bir e-posta ile tarafınıza iletilecektir.
@@ -60,6 +61,10 @@ export async function POST(req) {
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Müşteri:</strong></td>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Paket:</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;">${packageName}</td>
             </tr>
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>E-posta:</strong></td>

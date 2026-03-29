@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Calendar as CalendarIcon, ArrowRight, Video, ArrowLeft, Loader2, Instagram } from "lucide-react";
+import { Sparkles, Calendar as CalendarIcon, ArrowRight, Video, ArrowLeft, Loader2, Instagram, Check } from "lucide-react";
 import BookingCalendar from "@/components/BookingCalendar";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from "firebase/firestore";
@@ -13,6 +13,7 @@ const IS_TEST_MODE = false; // Real payments and real persistence required
 
 export default function Home() {
   const [step, setStep] = useState(1); // 1 = Hero, 2 = Calendar, 3 = Form, 4 = Payment Iframe
+  const [selectedPackage, setSelectedPackage] = useState("single");
   const [bookingData, setBookingData] = useState({ date: null, time: null });
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', socialMedia: '', brandStory: '', targetAudience: '', competitors: '', challenge: '', previousTraining: '', topics: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,7 +87,7 @@ export default function Home() {
         throw new Error("Firebase veritabanı bağlantısı kurulamadı. Lütfen yapılandırmayı kontrol edin.");
       }
 
-      const amount = 3500; // 3500 TL
+      const amount = selectedPackage === 'monthly' ? 13500 : 3500;
       let merchantOid = "NG_" + Date.now();
 
       console.log("Firestore kaydı başlatılıyor... Veri:", { date: bookingData.date, time: bookingData.time });
@@ -106,6 +107,7 @@ export default function Home() {
         topics: formData.topics,
         status: IS_TEST_MODE ? 'PAID' : 'PENDING',
         notes: IS_TEST_MODE ? 'TEST_MODE_BOOKING' : 'REAL_BOOKING_INITIATED',
+        package: selectedPackage,
         createdAt: serverTimestamp(),
         amount
       };
@@ -142,7 +144,7 @@ export default function Home() {
           phone: formData.phone,
           paymentAmount: amount,
           merchantOid,
-          userBasket: [["Sosyal Medya Danışmanlık - 45 Dk", amount.toString(), 1]]
+          userBasket: [[selectedPackage === 'monthly' ? "Aylık Danışmanlık" : "Sosyal Medya Danışmanlık - 45 Dk", amount.toString(), 1]]
         })
       });
 
@@ -225,53 +227,54 @@ export default function Home() {
         </motion.p>
 
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <button 
-            onClick={startBooking}
-            className="group relative w-full sm:w-auto flex flex-col items-center gap-0 px-10 py-4 bg-primary text-black font-semibold rounded-full overflow-hidden transition-all hover:scale-105 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
-          >
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5" />
-              <span>Hemen Randevu Al</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </div>
-            <div className="text-[10px] uppercase tracking-widest opacity-70 mt-[-2px]">3.500 TL / 45 Dakika</div>
-          </button>
-        </motion.div>
-
-        {/* Feature Cards */}
-        <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 w-full"
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16 w-full max-w-4xl mx-auto"
         >
-          <div className="glass glass-hover p-6 rounded-2xl flex flex-col items-center text-center transition-all">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Video className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Profil, İçerik & Ekipman</h3>
-            <p className="text-sm text-text-muted">Profil analizi, bio düzenleme, kitlenize özel senaryo fikirleri ve videographer destekli video kalite/tarz danışmanlığı.</p>
+          {/* Tek Seferlik Paket */}
+          <div className="glass p-8 rounded-3xl flex flex-col items-center text-center relative overflow-hidden transition-all hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(212,175,55,0.15)] border border-white/5 hover:border-primary/30">
+            <h3 className="text-2xl font-bold mb-2">Birebir Danışmanlık</h3>
+            <p className="text-sm text-text-muted mb-6">Tek seferlik özel strateji ve analiz görüşmesi (45 Dk)</p>
+            <div className="text-4xl font-black mb-6 text-gradient-gold">3.500 TL</div>
+            
+            <ul className="text-sm text-left text-white/80 space-y-3 mb-8 w-full flex-1">
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Profil analizi ve bio düzenleme</li>
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Büyüme odaklı stratejiler</li>
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Kitlenize özel senaryo fikirleri</li>
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Videographer destekli kalite danışmanlığı</li>
+            </ul>
+
+            <button 
+              onClick={() => { setSelectedPackage('single'); startBooking(); }}
+              className="w-full py-4 bg-white/10 text-white font-semibold rounded-xl hover:bg-primary hover:text-black transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black flex items-center justify-center gap-2"
+            >
+              Randevu Al <ArrowRight className="w-5 h-5" />
+            </button>
           </div>
-          
-          <div className="glass glass-hover p-6 rounded-2xl flex flex-col items-center text-center transition-all">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Sparkles className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Gelişmiş Strateji</h3>
-            <p className="text-sm text-text-muted">Algoritma dostu paylaşım saatleri, hashtag kullanımı ve büyüme sırları.</p>
-          </div>
-          
-          <div className="glass glass-hover p-6 rounded-2xl flex flex-col items-center text-center transition-all">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <CalendarIcon className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Hızlı Planlama</h3>
-            <p className="text-sm text-text-muted">Size uygun zamanı seçin (3.500 TL), online ödemenizi yapın ve randevuyu kapın.</p>
+
+          {/* Aylık Paket */}
+          <div className="glass p-8 rounded-3xl flex flex-col items-center text-center relative overflow-hidden transition-all hover:-translate-y-2 shadow-[0_0_30px_rgba(212,175,55,0.15)] border border-primary/50">
+            <div className="absolute top-0 right-0 bg-primary text-black text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">En Popüler</div>
+            <h3 className="text-2xl font-bold mb-2">Aylık Danışmanlık</h3>
+            <p className="text-sm text-text-muted mb-6">1 aylık tam kapsamlı strateji, içerik yönetimi ve destek</p>
+            <div className="text-4xl font-black mb-6 text-gradient-gold">13.500 TL</div>
+            
+            <ul className="text-sm text-left text-white/80 space-y-3 mb-8 w-full flex-1">
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Detaylı profil analizi & font/tasarım kimliği</li>
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Aylık içerik planı & Reels senaryoları (Hook/Cover)</li>
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Haftalık 1 Zoom görüşmesi (Toplam 4)</li>
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Sürekli WhatsApp destek hizmeti</li>
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> Hazırlanan videolara geri bildirim & analiz</li>
+               <li className="flex items-start gap-2"><Check className="w-5 h-5 text-primary shrink-0 mt-0.5"/> DM'den satış ve dönüşüm stratejisi</li>
+            </ul>
+
+            <button 
+              onClick={() => { setSelectedPackage('monthly'); startBooking(); }}
+              className="w-full py-4 bg-primary text-black font-semibold rounded-xl hover:bg-primary-hover transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black flex items-center justify-center gap-2"
+            >
+              Paketi Başlat <ArrowRight className="w-5 h-5" />
+            </button>
           </div>
         </motion.div>
       </main>
