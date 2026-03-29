@@ -1,16 +1,16 @@
 import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
-  if (process.env.DATABASE_URL) {
+  if (process.env.NEON_DATABASE_URL) {
     // Vercel kopyalama hataları için her iki koldan temizle
-    process.env.DATABASE_URL = process.env.DATABASE_URL.trim().replace(/^"|"$/g, '');
-    console.log("DIAGNOSTIC - URL Start:", process.env.DATABASE_URL.substring(0, 20) + "...");
+    process.env.NEON_DATABASE_URL = process.env.NEON_DATABASE_URL.trim().replace(/^"|"$/g, '');
+    console.log("DIAGNOSTIC - NEON URL Start:", process.env.NEON_DATABASE_URL.substring(0, 20) + "...");
   }
 
-  const url = process.env.DATABASE_URL;
+  const url = process.env.NEON_DATABASE_URL;
   
   if (!url && process.env.NODE_ENV === "production") {
-    console.warn("DIAGNOSTIC - WARNING: DATABASE_URL is MISSING or EMPTY!");
+    console.warn("DIAGNOSTIC - WARNING: NEON_DATABASE_URL is MISSING or EMPTY!");
   }
   
   return new PrismaClient({
