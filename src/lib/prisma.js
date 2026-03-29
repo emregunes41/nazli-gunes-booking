@@ -1,8 +1,12 @@
 import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
-  // Gereksiz boşlukları ve tırnakları temizle (Vercel kopyalama hataları için)
-  const url = process.env.DATABASE_URL?.trim().replace(/^"|"$/g, '');
+  // Vercel'deki kopyalama hataları (tırnak/boşluk) için ortam değişkenini direkt temizle
+  if (process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = process.env.DATABASE_URL.trim().replace(/^"|"$/g, '');
+  }
+
+  const url = process.env.DATABASE_URL;
   
   if (!url && process.env.NODE_ENV === "production") {
     console.warn("WARNING: DATABASE_URL is missing!");
