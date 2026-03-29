@@ -5,12 +5,16 @@ import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } fro
 import { db } from "@/lib/firebase";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Trash2, Edit3, X, Check, RefreshCw, Mail, Eye, Loader2, Search, Users, Calendar, Phone } from "lucide-react";
+import { Trash2, Edit3, X, Check, RefreshCw, Mail, Eye, Loader2, Search, Users, Calendar, Phone, MessageSquare, Star } from "lucide-react";
+import { getAllReviews, updateReviewStatus, deleteReview, updateReviewContent } from "../actions/reviews-admin";
 
 export default function AdminPage() {
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState("bookings"); // "bookings" or "users"
+  const [activeTab, setActiveTab] = useState("bookings"); // "bookings", "users" or "reviews"
+  const [reviews, setReviews] = useState([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -30,6 +34,19 @@ export default function AdminPage() {
       alert("Hatalı şifre!");
     }
   };
+
+  const fetchReviews = async () => {
+    setIsLoadingReviews(true);
+    const res = await getAllReviews();
+    setReviews(res);
+    setIsLoadingReviews(false);
+  };
+
+  useEffect(() => {
+    if (activeTab === "reviews") {
+      fetchReviews();
+    }
+  }, [activeTab]);
 
 
   const handleDelete = async (id) => {
@@ -196,8 +213,100 @@ export default function AdminPage() {
           >
             Kayıtlı Üyeler
           </button>
+          <button 
+            onClick={() => setActiveTab("reviews")}
+            className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'reviews' ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'text-text-muted hover:text-white'}`}
+          >
+            Yorumlar
+          </button>
         </div>
       </div>
+
+      {activeTab === "reviews" && (
+        <div className="glass rounded-3xl overflow-hidden border border-white/10">
+          <div className="p-4 bg-white/5 border-b border-white/5 flex items-center justify-between">
+            <span className="text-xs uppercase tracking-widest text-text-muted font-bold">Yorum İstekleri</span>
+            <div className="text-xs bg-primary/20 text-primary px-3 py-1 rounded-full font-bold">
+              {reviews.length} Toplam
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="p-4 font-semibold text-text-muted text-sm">Tarih</th>
+                  <th className="p-4 font-semibold text-text-muted text-sm border-l border-white/5">İsim & Hesap</th>
+                  <th className="p-4 font-semibold text-text-muted text-sm border-l border-white/5">Mesaj</th>
+                  <th className="p-4 font-semibold text-text-muted text-sm border-l border-white/5">Durum</th>
+                  <th className="p-4 font-semibold text-text-muted text-sm border-l border-white/5 text-right">İşlemler</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reviews.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="p-8 text-center text-text-muted">Henüz yorum bulunmuyor.</td>
+                  </tr>
+                ) : (
+                  reviews.map((r) => (
+                    <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                      <td className="p-4 border-r border-white/5 text-xs">
+                        {new Date(r.createdAt).toLocaleDateString("tr-TR")}
+                      </td>
+                      <td className="p-4 border-r border-white/5 font-medium">
+                        <div>{r.name}</div>
+                        <div className="text-xs text-primary">{r.handle}</div>
+                      </td>
+                      <td className="p-4 border-r border-white/5 text-sm italic max-w-sm truncate">
+                        <div className="flex gap-0.5 text-primary mb-1">
+                          {[...Array(r.rating)].map((_, i) => <Star key={i} className="w-3 h-3 fill-primary" />)}
+                        </div>
+                        "{r.text}"
+                      </td>
+                      <td className="p-4 border-r border-white/5">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold ${r.isApproved ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                          {r.isApproved ? 'Onaylı' : 'Bekliyor'}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          {!r.isApproved && (
+                            <button 
+                              onClick={async () => {
+                                await updateReviewStatus(r.id, true);
+                                fetchReviews();
+                              }}
+                              className="p-1.5 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => setEditingReview(r)}
+                            className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={async () => {
+                              if (confirm("Yorumu silmek istediğinize emin misiniz?")) {
+                                await deleteReview(r.id);
+                                fetchReviews();
+                              }
+                            }}
+                            className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {activeTab === "bookings" ? (
         <div className="glass rounded-3xl overflow-hidden border border-white/10">
@@ -601,6 +710,48 @@ export default function AdminPage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+      {/* Review Edit Modal */}
+      {editingReview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md glass p-6 rounded-3xl border border-white/10 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">Yorum Düzenle</h3>
+              <button onClick={() => setEditingReview(null)}><X className="w-6 h-6" /></button>
+            </div>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              const data = Object.fromEntries(formData);
+              await updateReviewContent(editingReview.id, data);
+              setEditingReview(null);
+              fetchReviews();
+            }} className="space-y-4">
+              <div>
+                <label className="text-xs text-text-muted mb-1 block uppercase">İsim</label>
+                <input type="text" name="name" defaultValue={editingReview.name} required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="text-xs text-text-muted mb-1 block uppercase">Handle (Instagram)</label>
+                <input type="text" name="handle" defaultValue={editingReview.handle} required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="text-xs text-text-muted mb-1 block uppercase">Puan</label>
+                <input type="number" name="rating" defaultValue={editingReview.rating} min="1" max="5" required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="text-xs text-text-muted mb-1 block uppercase">Mesaj</label>
+                <textarea name="text" defaultValue={editingReview.text} required rows={4} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <button 
+                type="submit"
+                className="w-full py-4 bg-primary text-black font-bold rounded-xl hover:bg-primary-hover transition-all"
+              >
+                Kaydet
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
