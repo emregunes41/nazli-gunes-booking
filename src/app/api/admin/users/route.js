@@ -1,29 +1,32 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// Connection string to the website's database
-const pool = new Pool({
-  connectionString: process.env.WEBSITE_DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
 export async function GET() {
   try {
-    const client = await pool.connect();
-    try {
-      // Fetch users from the website database
-      // Ordering by createdAt (most recent first)
-      const res = await client.query('SELECT name, email, gender, age, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC');
-      return NextResponse.json(res.rows);
-    } finally {
-      client.release();
-    }
+    // Prisma singleton üzerinden temizlenmiş NEON_DATABASE_URL ile üyeleri çek
+    const users = await prisma.user.findMany({
+      select: {
+        name: true,
+        email: true,
+        gender: true,
+        age: true,
+        phone: true,
+        createdAt: true,
+        role: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return NextResponse.json(users);
   } catch (err) {
-    console.error("Database connection error:", err);
-    return NextResponse.json({ error: "Veritabanı bağlantı hatası", details: err.message }, { status: 500 });
+    console.error("User Fetch Error:", err);
+    return NextResponse.json({ 
+      error: "Veritabanı bağlantı hatası", 
+      details: err.message 
+    }, { status: 500 });
   }
 }
