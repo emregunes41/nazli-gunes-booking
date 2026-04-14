@@ -21,12 +21,11 @@ export async function POST(req) {
     }
 
     const email_str = (email || "").trim();
-    console.log("[PayTR] Received params:", { email, name, phone, paymentAmount, merchantOid, email_str, emailType: typeof email });
     const payment_amount_str = (paymentAmount * 100).toString(); // Convert to kuruş
     const merchant_oid_str = merchantOid;
-    const user_name_str = name;
+    const user_name_str = name || "Müşteri";
     const user_address_str = userAddress || "Belirtilmedi";
-    const user_phone_str = phone;
+    const user_phone_str = phone || "";
     const user_ip_str = userIp || "127.0.0.1";
     
     // Standard required params
@@ -41,11 +40,30 @@ export async function POST(req) {
 
     const user_basket_str = Buffer.from(JSON.stringify(userBasket)).toString('base64');
 
-    // Create hash string
+    // Create hash string — PayTR docs order:
+    // merchant_id + user_ip + merchant_oid + email + payment_amount + user_basket + no_installment + max_installment + currency + test_mode
     const hash_str = merchant_id + user_ip_str + merchant_oid_str + email_str + payment_amount_str + user_basket_str + no_installment + max_installment + currency + test_mode;
     
     // Create token
-    const token = merchant_salt ? crypto.createHmac('sha256', merchant_key).update(hash_str + merchant_salt).digest('base64') : '';
+    const token = crypto.createHmac('sha256', merchant_key).update(hash_str + merchant_salt).digest('base64');
+
+    // DEBUG: Log all parameters being sent
+    console.log("[PayTR] === FULL DEBUG ===");
+    console.log("[PayTR] merchant_id:", merchant_id);
+    console.log("[PayTR] user_ip:", user_ip_str);
+    console.log("[PayTR] merchant_oid:", merchant_oid_str);
+    console.log("[PayTR] email:", email_str);
+    console.log("[PayTR] payment_amount:", payment_amount_str);
+    console.log("[PayTR] user_basket (raw):", JSON.stringify(userBasket));
+    console.log("[PayTR] user_basket (b64):", user_basket_str);
+    console.log("[PayTR] no_installment:", no_installment);
+    console.log("[PayTR] max_installment:", max_installment);
+    console.log("[PayTR] currency:", currency);
+    console.log("[PayTR] test_mode:", test_mode);
+    console.log("[PayTR] merchant_ok_url:", merchant_ok_url);
+    console.log("[PayTR] merchant_fail_url:", merchant_fail_url);
+    console.log("[PayTR] token:", token);
+    console.log("[PayTR] === END DEBUG ===");
 
     const postData = new URLSearchParams({
       merchant_id,
@@ -67,8 +85,6 @@ export async function POST(req) {
       currency,
       test_mode
     });
-
-    console.log("[PayTR] Sending token request with merchant_oid:", merchantOid, "amount:", payment_amount_str, "test_mode:", test_mode);
 
     // Add timeout to prevent hanging
     const controller = new AbortController();
@@ -100,7 +116,7 @@ export async function POST(req) {
         console.log("[PayTR] Token generated successfully");
         return NextResponse.json({ token: body.token });
       } else {
-        console.error("[PayTR] Token Error:", body.reason);
+        console.error("[PayTR] Token Error:", body.reason, "Details:", JSON.stringify(body));
         return NextResponse.json({ error: body.reason }, { status: 400 });
       }
     } catch (fetchErr) {

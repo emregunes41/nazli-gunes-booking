@@ -165,7 +165,7 @@ export default function Home() {
           phone: formData.phone,
           paymentAmount: amount,
           merchantOid,
-          userBasket: [[selectedPackage === 'monthly' ? "Aylık Danışmanlık" : "Sosyal Medya Danışmanlık - 45 Dk", (amount * 100).toString(), 1]]
+          userBasket: [[selectedPackage === 'monthly' ? "Aylık Danışmanlık" : "Sosyal Medya Danışmanlık - 45 Dk", amount.toString(), 1]]
         })
       });
 
