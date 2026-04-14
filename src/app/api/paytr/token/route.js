@@ -20,7 +20,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "Ödeme altyapısı yapılandırılmamış." }, { status: 500 });
     }
 
-    const email_str = email;
+    const email_str = (email || "").trim();
+    console.log("[PayTR] Received params:", { email, name, phone, paymentAmount, merchantOid, email_str, emailType: typeof email });
     const payment_amount_str = (paymentAmount * 100).toString(); // Convert to kuruş
     const merchant_oid_str = merchantOid;
     const user_name_str = name;
