@@ -38,6 +38,20 @@ export default function SuccessPage() {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4 }}
+        className="glass border border-white/10 rounded-2xl px-6 py-5 mb-8 max-w-md mx-auto"
+      >
+        <p className="text-sm text-white/70">
+          Herhangi bir sorunuz olursa bize ulaşabilirsiniz:
+        </p>
+        <a href="tel:+905392052041" className="inline-flex items-center gap-2 mt-2 text-primary font-semibold text-lg hover:underline">
+          📞 0539 205 20 41
+        </a>
+      </motion.div>
+
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
       >
         <Link href="/">
           <button className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-medium rounded-full flex items-center justify-center gap-2 transition-all">
